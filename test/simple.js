@@ -1,0 +1,407 @@
+'use strict';
+
+const mkdex = require('..');
+const should = require('should');
+
+describe('Simple', function () {
+  it('should generate a minimal dex', function () {
+    const actual = mkdex({
+      name: 'Lre/frida/Banana;',
+      sourceFileName: 'Banana.java',
+      superClass: 'Ljava/lang/Object;',
+      interfaces: ['Lre/frida/Eatable;'],
+      methods: [
+        ['getCalories', 'I', ['I']],
+        ['getName', 'Ljava/lang/String;', []],
+      ],
+    });
+
+    const expected = Buffer.from([
+      // Magic
+      0x64, 0x65, 0x78, 0x0a, 0x30, 0x33, 0x35, 0x00,
+
+      // Checksum (adler32)
+      0x55, 0x4c, 0xdb, 0xca,
+
+      // Signature (SHA-1)
+      0xcc, 0x58, 0x0c, 0x97, 0xd1, 0x54, 0x72, 0xfe, 0x57, 0x20, 0x2a, 0x7e,
+      0x75, 0x55, 0x1e, 0x93, 0x6f, 0x81, 0xf0, 0x49,
+
+      // File size
+      0x74, 0x02, 0x00, 0x00,
+
+      // Header size
+      0x70, 0x00, 0x00, 0x00,
+
+      // Endian tag
+      0x78, 0x56, 0x34, 0x12,
+
+      // Link size
+      0x00, 0x00, 0x00, 0x00,
+      // Link offset
+      0x00, 0x00, 0x00, 0x00,
+
+      // Map offset
+      0xe0, 0x01, 0x00, 0x00,
+
+      // String IDs size
+      0x0c, 0x00, 0x00, 0x00,
+      // String IDs offset
+      0x70, 0x00, 0x00, 0x00,
+
+      // Type IDs size
+      0x06, 0x00, 0x00, 0x00,
+      // Type IDs offset
+      0xa0, 0x00, 0x00, 0x00,
+
+      // Proto IDs size
+      0x03, 0x00, 0x00, 0x00,
+      // Proto IDs offset
+      0xb8, 0x00, 0x00, 0x00,
+
+      // Field IDs size
+      0x00, 0x00, 0x00, 0x00,
+      // Field IDs offset
+      0x00, 0x00, 0x00, 0x00,
+
+      // Method IDs size
+      0x04, 0x00, 0x00, 0x00,
+      // Method IDs offset
+      0xdc, 0x00, 0x00, 0x00,
+
+      // Class defs size
+      0x01, 0x00, 0x00, 0x00,
+      // Class defs offset
+      0xfc, 0x00, 0x00, 0x00,
+
+      // Data size
+      0x58, 0x01, 0x00, 0x00,
+      // Data offset
+      0x1c, 0x01, 0x00, 0x00,
+
+      // Offset 0x70: string_ids[12]
+      0x42, 0x01, 0x00, 0x00,
+      0x4a, 0x01, 0x00, 0x00,
+      0x57, 0x01, 0x00, 0x00,
+      0x5a, 0x01, 0x00, 0x00,
+      0x5e, 0x01, 0x00, 0x00,
+      0x61, 0x01, 0x00, 0x00,
+      0x75, 0x01, 0x00, 0x00,
+      0x89, 0x01, 0x00, 0x00,
+      0x9c, 0x01, 0x00, 0x00,
+      0xb0, 0x01, 0x00, 0x00,
+      0xb3, 0x01, 0x00, 0x00,
+      0xc0, 0x01, 0x00, 0x00,
+
+      // Offset 0xa0: type_ids[6]
+      0x02, 0x00, 0x00, 0x00, // 'I'
+      0x05, 0x00, 0x00, 0x00, // 'Ljava/lang/Object;'
+      0x06, 0x00, 0x00, 0x00, // 'Ljava/lang/String;'
+      0x07, 0x00, 0x00, 0x00, // 'Lre/frida/Banana;'
+      0x08, 0x00, 0x00, 0x00, // 'Lre/frida/Eatable;'
+      0x09, 0x00, 0x00, 0x00, // 'V'
+
+      // Offset 0xb8: proto_ids[3]
+      0x03, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x3c, 0x01, 0x00, 0x00,
+      0x04, 0x00, 0x00, 0x00, 0x02, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+      0x09, 0x00, 0x00, 0x00, 0x05, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+
+      // Offset 0xdc: methods[4]
+      0x01, 0x00, 0x02, 0x00, 0x00, 0x00, 0x00, 0x00,
+      0x03, 0x00, 0x02, 0x00, 0x00, 0x00, 0x00, 0x00,
+      0x03, 0x00, 0x00, 0x00, 0x0a, 0x00, 0x00, 0x00,
+      0x03, 0x00, 0x01, 0x00, 0x0b, 0x00, 0x00, 0x00,
+
+      // Offset 0xfc: classes[1]
+        /*         class_idx */ 0x03, 0x00, 0x00, 0x00,
+        /*      access_flags */ 0x01, 0x00, 0x00, 0x00,
+        /*    superclass_idx */ 0x01, 0x00, 0x00, 0x00,
+        /*    interfaces_off */ 0x34, 0x01, 0x00, 0x00,
+        /*   source_file_idx */ 0x01, 0x00, 0x00, 0x00,
+        /*   annotations_off */ 0x00, 0x00, 0x00, 0x00,
+        /*    class_data_off */ 0xce, 0x01, 0x00, 0x00,
+        /* static_values_off */ 0x00, 0x00, 0x00, 0x00,
+
+      // Offset 0x11c: code_item for classes[0].direct_methods[0]
+        /* registers_size */ 0x01, 0x00,
+        /*       ins_size */ 0x01, 0x00,
+        /*      outs_size */ 0x01, 0x00,
+        /*     tries_size */ 0x00, 0x00,
+        /* debug_info_off */ 0xc9, 0x01, 0x00, 0x00,
+        /*     insns_size */ 0x04, 0x00, 0x00, 0x00,
+        /*       insns[0] */ 0x70, 0x10,
+        /*       insns[1] */ 0x00, 0x00,
+        /*       insns[2] */ 0x00, 0x00,
+        /*       insns[3] */ 0x0e, 0x00,
+
+      // Offset 0x134: interfaces for classes[0]
+        /*     size */ 0x01, 0x00, 0x00, 0x00,
+        /* type_idx */ 0x04, 0x00,
+
+      // Padding
+      0x00, 0x00,
+
+      // Offset 0x13c: parameters for proto_ids[0]
+        /*     size */ 0x01, 0x00, 0x00, 0x00,
+        /* type_idx */ 0x00, 0x00,
+
+      //
+      // STRINGS
+      //
+
+      // Offset 0x142: strings[0] = '<init>'
+      0x06,
+      0x3c, 0x69, 0x6e, 0x69, 0x74, 0x3e, 0x00,
+
+      // Offset 0x14a: strings[1] = 'Banana.java'
+      0x0b,
+      0x42, 0x61, 0x6e, 0x61, 0x6e, 0x61, 0x2e, 0x6a, 0x61, 0x76, 0x61, 0x00,
+
+      // Offset 0x157: strings[2] = 'I'
+      0x01,
+      0x49, 0x00,
+
+      // Offset 0x15a: strings[3] = 'II'
+      0x02,
+      0x49, 0x49, 0x00,
+
+      // Offset 0x15e: strings[4] = 'L'
+      0x01,
+      0x4c, 0x00,
+
+      // Offset 0x161: strings[5] = 'Ljava/lang/Object;'
+      0x12,
+      0x4c, 0x6a, 0x61, 0x76, 0x61, 0x2f, 0x6c, 0x61, 0x6e, 0x67, 0x2f, 0x4f,
+      0x62, 0x6a, 0x65, 0x63, 0x74, 0x3b, 0x00,
+
+      // Offset 0x175: strings[6] = 'Ljava/lang/String;'
+      0x12,
+      0x4c, 0x6a, 0x61, 0x76, 0x61, 0x2f, 0x6c, 0x61, 0x6e, 0x67, 0x2f, 0x53,
+      0x74, 0x72, 0x69, 0x6e, 0x67, 0x3b, 0x00,
+
+      // Offset 0x189: strings[7] = 'Lre/frida/Banana;'
+      0x11,
+      0x4c, 0x72, 0x65, 0x2f, 0x66, 0x72, 0x69, 0x64, 0x61, 0x2f, 0x42, 0x61,
+      0x6e, 0x61, 0x6e, 0x61, 0x3b, 0x00,
+
+      // Offset 0x19c: strings[8] = 'Lre/frida/Eatable;'
+      0x12,
+      0x4c, 0x72, 0x65, 0x2f, 0x66, 0x72, 0x69, 0x64, 0x61, 0x2f, 0x45, 0x61,
+      0x74, 0x61, 0x62, 0x6c, 0x65, 0x3b, 0x00,
+
+      // Offset 0x1b0: strings[9] = 'V'
+      0x01,
+      0x56, 0x00,
+
+      // Offset 0x1b3: strings[10] = 'getCalories'
+      0x0b,
+      0x67, 0x65, 0x74, 0x43, 0x61, 0x6c, 0x6f, 0x72, 0x69, 0x65, 0x73, 0x00,
+
+      // Offset 0x1c0: strings[11] = 'getName'
+      0x07,
+      0x67, 0x65, 0x74, 0x4e, 0x61, 0x6d, 0x65, 0x00,
+
+      // Offset 0x1c9: debug info for classes[0].direct_methods[0]
+        /*           line_start */ 0x03,
+        /*      parameters_size */ 0x00,
+        /* DBG_SET_PROLOGUE_END */ 0x07,
+        /*     <special opcode> */ 0x0e,
+        /*     DBG_END_SEQUENCE */ 0x00,
+
+      // Offset 0x1ce: class data for classes[0]
+        /*   static_fields_size */ 0x00,
+        /* instance_fields_size */ 0x00,
+        /*  direct_methods_size */ 0x01,
+        /* virtual_methods_size */ 0x02,
+
+        /* static_fields: none */
+        /* instance_fields: none */
+
+        // direct_methods[0]
+          /* method_idx_diff */ 0x01,
+          /*    access_flags */ 0x81, 0x80, 0x04,
+          /*        code_off */ 0x9c, 0x02, /* 0x11c */
+
+        // virtual_methods[0]
+          /* method_idx_diff */ 0x02,
+          /*    access_flags */ 0x81, 0x02,
+          /*        code_off */ 0x00,
+        // virtual_methods[1]
+          /* method_idx_diff */ 0x01,
+          /*    access_flags */ 0x81, 0x02,
+          /*        code_off */ 0x00,
+
+      // Offset 0x1e0: map
+        /* size */ 0x0c, 0x00, 0x00, 0x00,
+        // list[0]
+          /*      TYPE_HEADER_ITEM */ 0x00, 0x00,
+          /*                unused */ 0x00, 0x00,
+          /*                  size */ 0x01, 0x00, 0x00, 0x00,
+          /*                offset */ 0x00, 0x00, 0x00, 0x00,
+        // list[1]
+          /*   TYPE_STRING_ID_ITEM */ 0x01, 0x00,
+          /*                unused */ 0x00, 0x00,
+          /*                  size */ 0x0c, 0x00, 0x00, 0x00,
+          /*                offset */ 0x70, 0x00, 0x00, 0x00,
+        // list[2]
+          /*     TYPE_TYPE_ID_ITEM */ 0x02, 0x00,
+          /*                unused */ 0x00, 0x00,
+          /*                  size */ 0x06, 0x00, 0x00, 0x00,
+          /*                offset */ 0xa0, 0x00, 0x00, 0x00,
+        // list[3]
+          /*    TYPE_PROTO_ID_ITEM */ 0x03, 0x00,
+          /*                unused */ 0x00, 0x00,
+          /*                  size */ 0x03, 0x00, 0x00, 0x00,
+          /*                offset */ 0xb8, 0x00, 0x00, 0x00,
+        // list[4]
+          /*   TYPE_METHOD_ID_ITEM */ 0x05, 0x00,
+          /*                unused */ 0x00, 0x00,
+          /*                  size */ 0x04, 0x00, 0x00, 0x00,
+          /*                offset */ 0xdc, 0x00, 0x00, 0x00,
+        // list[5]
+          /*   TYPE_CLASS_DEF_ITEM */ 0x06, 0x00,
+          /*                unused */ 0x00, 0x00,
+          /*                  size */ 0x01, 0x00, 0x00, 0x00,
+          /*                offset */ 0xfc, 0x00, 0x00, 0x00,
+        // list[6]
+          /*        TYPE_CODE_ITEM */ 0x01, 0x20,
+          /*                unused */ 0x00, 0x00,
+          /*                  size */ 0x01, 0x00, 0x00, 0x00,
+          /*                offset */ 0x1c, 0x01, 0x00, 0x00,
+        // list[7]
+          /*        TYPE_TYPE_LIST */ 0x01, 0x10,
+          /*                unused */ 0x00, 0x00,
+          /*                  size */ 0x02, 0x00, 0x00, 0x00,
+          /*                offset */ 0x34, 0x01, 0x00, 0x00,
+        // list[8]
+          /* TYPE_STRING_DATA_ITEM */ 0x02, 0x20,
+          /*                unused */ 0x00, 0x00,
+          /*                  size */ 0x0c, 0x00, 0x00, 0x00,
+          /*                offset */ 0x42, 0x01, 0x00, 0x00,
+        // list[9]
+          /*  TYPE_DEBUG_INFO_ITEM */ 0x03, 0x20,
+          /*                unused */ 0x00, 0x00,
+          /*                  size */ 0x01, 0x00, 0x00, 0x00,
+          /*                offset */ 0xc9, 0x01, 0x00, 0x00,
+        // list[10]
+          /*  TYPE_CLASS_DATA_ITEM */ 0x00, 0x20,
+          /*                unused */ 0x00, 0x00,
+          /*                  size */ 0x01, 0x00, 0x00, 0x00,
+          /*                offset */ 0xce, 0x01, 0x00, 0x00,
+        // list[11]
+          /*         TYPE_MAP_LIST */ 0x00, 0x10,
+          /*                unused */ 0x00, 0x00,
+          /*                  size */ 0x01, 0x00, 0x00, 0x00,
+          /*                offset */ 0xe0, 0x01, 0x00, 0x00
+    ]);
+
+    const actualHex = hexdump(actual, { ansi: true });
+    const expectedHex = hexdump(expected, { ansi: true });
+    actualHex.should.be.equal(expectedHex);
+  });
+});
+
+function hexdump (buffer, options) {
+  options = options || {};
+
+  const startOffset = options.offset || 0;
+  let length = options.length;
+  if (length === undefined) {
+    length = buffer.length;
+  }
+  const showHeader = options.hasOwnProperty('header') ? options.header : true;
+  const useAnsi = options.hasOwnProperty('ansi') ? options.ansi : false;
+
+  const columnPadding = '  ';
+  const leftColumnWidth = 8;
+  const hexLegend = ' 0  1  2  3  4  5  6  7  8  9  A  B  C  D  E  F';
+  const asciiLegend = '0123456789ABCDEF';
+
+  let resetColor, offsetColor, dataColor, newlineColor;
+  if (useAnsi) {
+    resetColor = '\x1b[0m';
+    offsetColor = '\x1b[0;32m';
+    dataColor = '\x1b[0;33m';
+    newlineColor = resetColor;
+  } else {
+    resetColor = '';
+    offsetColor = '';
+    dataColor = '';
+    newlineColor = '';
+  }
+
+  const result = [];
+
+  if (showHeader) {
+    result.push(
+      '        ',
+      columnPadding,
+      hexLegend,
+      columnPadding,
+      asciiLegend,
+      '\n'
+    );
+  }
+
+  let offset = startOffset;
+  for (let bufferOffset = 0; bufferOffset < length; bufferOffset += 16) {
+    if (bufferOffset !== 0) {
+      result.push('\n');
+    }
+
+    result.push(
+      offsetColor, pad(offset.toString(16), leftColumnWidth, '0'), resetColor,
+      columnPadding
+    );
+
+    const asciiChars = [];
+    const lineSize = Math.min(length - offset, 16);
+
+    for (let lineOffset = 0; lineOffset !== lineSize; lineOffset++) {
+      const value = buffer[offset++];
+
+      const isNewline = value === 10;
+
+      const hexPair = pad(value.toString(16), 2, '0');
+      if (lineOffset !== 0) {
+        result.push(' ');
+      }
+      result.push(
+        isNewline ? newlineColor : dataColor,
+        hexPair,
+        resetColor
+      );
+
+      asciiChars.push(
+        isNewline ? newlineColor : dataColor,
+        (value >= 32 && value <= 126) ? String.fromCharCode(value) : '.',
+        resetColor
+      );
+    }
+
+    for (let lineOffset = lineSize; lineOffset !== 16; lineOffset++) {
+      result.push('   ');
+      asciiChars.push(' ');
+    }
+
+    result.push(columnPadding);
+
+    Array.prototype.push.apply(result, asciiChars);
+  }
+
+  let trailingSpaceCount = 0;
+  for (let tailOffset = result.length - 1; tailOffset >= 0 && result[tailOffset] === ' '; tailOffset--) {
+    trailingSpaceCount++;
+  }
+
+  return result.slice(0, result.length - trailingSpaceCount).join('');
+}
+
+function pad (str, width, fill) {
+  const result = [];
+  const paddingSize = Math.max(width - str.length, 0);
+  for (let index = 0; index !== paddingSize; index++) {
+    result.push(fill);
+  }
+  return result.join('') + str;
+}
